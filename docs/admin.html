@@ -2,28 +2,29 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://dfnnmvrogidhhjpyxcqd.supabase.co; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>JAS Coworking — кабинет администратора</title>
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#06105f">
-  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap">
-  <link rel="stylesheet" href="/assets/base.css">
-  <link rel="stylesheet" href="/assets/admin.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <link rel="stylesheet" href="assets/admin.css">
 </head>
 <body>
   <!-- Вход / регистрация -->
   <div class="auth" id="authScreen" hidden>
     <div class="auth-art" aria-hidden="true">
-      <img src="/assets/logo.png" alt="" width="132" height="132">
+      <img src="assets/logo.png" alt="" width="132" height="132">
       <h2>Кабинет администратора</h2>
       <p>Все брони переговорных Focus Room и Alfa в реальном времени: расписание, контакты гостей, отмены и выгрузка в Excel.</p>
     </div>
     <div class="auth-panel">
       <div class="auth-card">
-        <div class="auth-brand"><img src="/assets/logo.png" alt="JAS" width="40" height="40"><b>JAS Coworking</b></div>
+        <div class="auth-brand"><img src="assets/logo.png" alt="JAS" width="40" height="40"><b>JAS Coworking</b></div>
         <div class="segmented auth-tabs" role="tablist">
           <button type="button" role="tab" data-tab="login" aria-pressed="true">Вход</button>
           <button type="button" role="tab" data-tab="register" aria-pressed="false">Регистрация</button>
@@ -42,6 +43,7 @@
           <h1>Регистрация</h1>
           <div class="seats" id="seats"></div>
           <div id="regFields">
+            <div class="field"><label for="r-invite">Код приглашения</label><input class="input" id="r-invite" name="invite" autocomplete="off" placeholder="XXXX-XXXX" maxlength="20" required><div class="field-error" data-error="invite"></div></div>
             <div class="field"><label for="r-name">Имя</label><input class="input" id="r-name" name="name" autocomplete="name" maxlength="80"></div>
             <div class="field"><label for="r-email">Email</label><input class="input" id="r-email" name="email" type="email" autocomplete="username" required><div class="field-error" data-error="email"></div></div>
             <div class="field"><label for="r-pass">Пароль <span class="opt">— минимум 8 символов</span></label><input class="input" id="r-pass" name="password" type="password" autocomplete="new-password" minlength="8" required><div class="field-error" data-error="password"></div></div>
@@ -49,7 +51,7 @@
             <button class="btn btn-primary btn-block auth-submit" type="submit">Зарегистрироваться</button>
           </div>
         </form>
-        <a class="back-link" href="/">← К странице бронирования</a>
+        <a class="back-link" href="./">← К странице бронирования</a>
       </div>
     </div>
   </div>
@@ -57,8 +59,8 @@
   <!-- Кабинет -->
   <div class="app" id="appScreen" hidden>
     <aside class="sidebar">
-      <a class="sb-brand" href="/admin">
-        <img src="/assets/logo.png" alt="JAS" width="40" height="40">
+      <a class="sb-brand" href="admin.html">
+        <img src="assets/logo.png" alt="JAS" width="40" height="40">
         <span><b>JAS Coworking</b><small>Администратор</small></span>
       </a>
       <nav class="sb-nav" id="nav">
@@ -69,7 +71,7 @@
         <a href="#settings" data-view="settings"><span data-icon="settings"></span>Настройки</a>
       </nav>
       <div class="sb-foot">
-        <a class="sb-link" href="/" target="_blank" rel="noopener">Открыть страницу бронирования ↗</a>
+        <a class="sb-link" href="./" target="_blank" rel="noopener">Открыть страницу бронирования ↗</a>
         <div class="sb-user">
           <span class="avatar" id="meAvatar"></span>
           <span class="sb-user-text"><b id="meName"></b><small id="meEmail"></small></span>
@@ -94,7 +96,8 @@
   </div>
 
   <div id="toasts" class="toasts"></div>
-  <script src="/assets/common.js"></script>
-  <script src="/assets/admin.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="assets/admin.js"></script>
 </body>
 </html>

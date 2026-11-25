@@ -439,9 +439,11 @@
       const res = await J.api('/api/bookings', { method: 'POST', body });
       saveMine(res.booking.code, res.token);
       saveProfile();
+      S.busy.push({ room_id: res.booking.room_id, start: res.booking.start, end: res.booking.end });
       $('#f-purpose').value = '';
       clearSel(false);
       S.submitting = false;
+      renderAll();
       showSuccess(res.booking);
       await loadBusy();
     } catch (err) {

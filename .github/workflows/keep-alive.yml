@@ -1,0 +1,21 @@
+# Бесплатный проект Supabase засыпает после 7 дней без обращений.
+# Этот сценарий раз в сутки делает один лёгкий запрос к базе, чтобы она не засыпала.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Запрос к базе бронирований
+        run: |
+          curl -fsS -X POST "https://dfnnmvrogidhhjpyxcqd.supabase.co/rest/v1/rpc/jas_config" \
+            -H "apikey: sb_publishable_-60QjIPl8ZmjLgb2-8jKIA__jWVXHp0" \
+            -H "Content-Type: application/json" \
+            -d '{"p":{}}' > /dev/null
+          echo "База отвечает"

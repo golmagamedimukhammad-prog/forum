@@ -113,28 +113,77 @@
     }
   }
 
-  /* --- сеть --- */
+  /* --- сеть: функции базы Supabase ---
+   * Страницы обращаются к «путям» вида /api/...; здесь каждый путь
+   * сопоставлен функции public.jas_* в базе (см. supabase/migrations).
+   */
+  const CFG = window.JAS_CONFIG || {};
+  const TOKEN_KEY = 'jas.adminToken';
+  const ROUTES = [
+    ['GET', /^\/api\/config$/, 'jas_config'],
+    ['GET', /^\/api\/availability$/, 'jas_availability'],
+    ['POST', /^\/api\/bookings$/, 'jas_create_booking'],
+    ['POST', /^\/api\/bookings\/mine$/, 'jas_my_bookings'],
+    ['POST', /^\/api\/bookings\/lookup$/, 'jas_lookup_booking'],
+    ['POST', /^\/api\/bookings\/cancel$/, 'jas_cancel_booking'],
+    ['GET', /^\/api\/admin\/status$/, 'jas_admin_status'],
+    ['POST', /^\/api\/admin\/register$/, 'jas_admin_register'],
+    ['POST', /^\/api\/admin\/login$/, 'jas_admin_login'],
+    ['POST', /^\/api\/admin\/logout$/, 'jas_admin_logout'],
+    ['GET', /^\/api\/admin\/overview$/, 'jas_admin_overview'],
+    ['GET', /^\/api\/admin\/bookings$/, 'jas_admin_bookings'],
+    ['GET', /^\/api\/admin\/bookings\/recent$/, 'jas_admin_recent'],
+    ['POST', /^\/api\/admin\/bookings$/, 'jas_admin_create_booking'],
+    ['POST', /^\/api\/admin\/bookings\/(?<id>\d+)\/cancel$/, 'jas_admin_cancel_booking'],
+    ['GET', /^\/api\/admin\/admins$/, 'jas_admin_admins'],
+    ['POST', /^\/api\/admin\/admins\/(?<id>\d+)\/remove$/, 'jas_admin_remove_admin'],
+    ['POST', /^\/api\/admin\/invite$/, 'jas_admin_new_invite'],
+    ['PUT', /^\/api\/admin\/settings$/, 'jas_admin_save_settings'],
+  ];
+
+  const adminToken = {
+    get() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } },
+    set(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch { /* недоступно */ } },
+  };
+
+  function apiError(message, status, data = {}) {
+    const err = new Error(message);
+    err.status = status;
+    err.data = data;
+    return err;
+  }
+
   async function api(path, { method = 'GET', body } = {}) {
-    const opts = { method, headers: { Accept: 'application/json' }, credentials: 'same-origin' };
-    if (method !== 'GET') {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(body || {});
-    }
+    const url = new URL(path, location.href);
+    const route = ROUTES.find(([m, re]) => m === method && re.test(url.pathname));
+    if (!route) throw apiError('Неизвестный запрос', 404);
+    const fn = route[2];
+    const p = { ...Object.fromEntries(url.searchParams), ...(body || {}), ...(route[1].exec(url.pathname).groups || {}) };
+    if (fn.startsWith('jas_admin_')) p.token = adminToken.get();
+
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json', apikey: CFG.supabaseKey };
+    if (/^eyJ/.test(CFG.supabaseKey || '')) headers.Authorization = `Bearer ${CFG.supabaseKey}`;
     let res;
     try {
-      res = await fetch(path, opts);
+      res = await fetch(`${CFG.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', headers, body: JSON.stringify({ p }) });
     } catch {
-      const err = new Error('Нет соединения с сервером');
-      err.status = 0;
-      throw err;
+      throw apiError('Нет соединения с сервером', 0);
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.error || `Ошибка ${res.status}`);
-      err.status = res.status;
-      err.data = data;
-      throw err;
+      // Ошибки базы: message — текст, details — JSON с ошибками полей
+      let errors;
+      try { errors = data.details ? JSON.parse(data.details) : undefined; } catch { errors = undefined; }
+      const status = /^PT\d{3}$/.test(data.code || '') ? Number(data.code.slice(2)) : res.status;
+      if (status === 401) adminToken.set('');
+      throw apiError(data.message || `Ошибка ${res.status}`, status, { error: data.message, errors });
     }
+    if (data && data._status) {
+      if (data._status === 401 && fn !== 'jas_admin_login') adminToken.set('');
+      throw apiError(data._error, data._status, { error: data._error, errors: data.errors || undefined });
+    }
+    if (data && data.token && (fn === 'jas_admin_login' || fn === 'jas_admin_register')) adminToken.set(data.token);
+    if (fn === 'jas_admin_logout') adminToken.set('');
     return data;
   }
 

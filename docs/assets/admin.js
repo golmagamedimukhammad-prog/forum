@@ -126,7 +126,7 @@
     seats.className = `seats${free ? '' : ' full'}`;
     seats.innerHTML = `<div class="seats-row"><b>Зарегистрировано ${st.adminsCount} из ${st.maxAdmins}</b><span class="seat-dots">${dots}</span></div>
       <p>${free
-    ? `Свободно ${free} ${J.plural(free, 'место', 'места', 'мест')}. Кабинет доступен максимум для ${st.maxAdmins} email.${st.restrictedEmails ? ' Регистрация разрешена только для почт из списка владельца.' : ''}`
+    ? `Свободно ${free} ${J.plural(free, 'место', 'места', 'мест')}. Кабинет доступен максимум для ${st.maxAdmins} email. Для регистрации нужен код приглашения.`
     : 'Все места заняты. Чтобы добавить новый email, действующий администратор должен освободить место в разделе «Администраторы».'}</p>`;
     $('#regFields').hidden = !free;
     switchTab(st.adminsCount === 0 ? 'register' : 'login');
@@ -136,7 +136,7 @@
     $$('.auth-tabs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === tab)));
     $('#loginForm').hidden = tab !== 'login';
     $('#registerForm').hidden = tab !== 'register';
-    const first = $(tab === 'login' ? '#l-email' : '#r-name');
+    const first = $(tab === 'login' ? '#l-email' : '#r-invite');
     if (first && !$('#authScreen').hidden) setTimeout(() => first.focus(), 30);
   }
 
@@ -165,7 +165,7 @@
       }
     };
     $('#loginForm').addEventListener('submit', submitAuth('#loginForm', '/api/admin/login', ['email', 'password']));
-    $('#registerForm').addEventListener('submit', submitAuth('#registerForm', '/api/admin/register', ['name', 'email', 'password']));
+    $('#registerForm').addEventListener('submit', submitAuth('#registerForm', '/api/admin/register', ['invite', 'name', 'email', 'password']));
   }
 
   /* ------------------------------------------------------------ кабинет */
@@ -224,7 +224,7 @@
     stopTimer();
     try { await J.api('/api/admin/logout', { method: 'POST' }); } catch { /* всё равно выходим */ }
     A.me = null;
-    history.replaceState(null, '', '/admin');
+    history.replaceState(null, '', location.pathname);
     showAuth(await J.api('/api/admin/status'));
   }
 
@@ -574,22 +574,55 @@
     $('#ff-q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { L.q = e.target.value; renderBookingsTable(); }, 150); });
     $('#csvBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      const qs = new URLSearchParams({ from: L.from, to: L.to, status: L.status });
-      if (L.room) qs.set('room', L.room);
-      location.href = `/api/admin/export.csv?${qs}`;
+      exportCsv();
     });
   }
 
-  function renderBookingsTable() {
+  function filteredRows() {
     const L = A.list;
     const q = L.q.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, '');
-    const rows = L.rows.filter((b) => {
+    return L.rows.filter((b) => {
       if (L.type && b.member_type !== L.type) return false;
       if (!q) return true;
       const hay = [b.name, b.email, b.company, b.purpose, `jas-${b.code}`, b.code].join(' ').toLowerCase();
       return hay.includes(q) || (qDigits.length >= 3 && b.phone.replace(/\D/g, '').includes(qDigits));
     });
+  }
+
+  /** Выгрузка текущей выборки в CSV (открывается в Excel, разделитель «;»). */
+  function exportCsv() {
+    const rows = filteredRows();
+    if (!rows.length) { J.toast('Нет броней для выгрузки'); return; }
+    const cell = (v) => {
+      let s = String(v ?? '');
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; // защита от формул
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const head = ['Код', 'Комната', 'Дата', 'Начало', 'Окончание', 'Длительность (мин)', 'Имя', 'Телефон', 'Email', 'Компания',
+      'Статус клиента', 'Человек', 'Цель', 'Статус брони', 'Создана', 'Кем создана', 'Отменена', 'Кем отменена', 'Причина отмены'];
+    const lines = [head.map(cell).join(';')];
+    for (const b of rows) {
+      lines.push([
+        `JAS-${b.code}`, roomById(b.room_id).name, b.start.slice(0, 10), b.start.slice(11), b.end.replace('T', ' '),
+        J.diffMin(b.start, b.end), b.name, b.phone, b.email, b.company, b.member_type === 'guest' ? 'Гость' : 'Резидент',
+        b.people, b.purpose, b.status === 'active' ? 'Активна' : 'Отменена', fmtInstant(b.created_at, true),
+        b.created_by === 'client' ? 'клиент' : b.created_by, fmtInstant(b.cancelled_at, true),
+        b.cancelled_by === 'client' ? 'клиент' : (b.cancelled_by || ''), b.cancel_reason,
+      ].map(cell).join(';'));
+    }
+    const blob = new Blob([`﻿${lines.join('\r\n')}\r\n`], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `jas-bookings-${A.list.from}_${A.list.to}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  function renderBookingsTable() {
+    const L = A.list;
+    const rows = filteredRows();
     const hours = rows.filter((b) => b.status === 'active').reduce((s, b) => s + J.diffMin(b.start, b.end), 0);
     $('#bkCount').textContent = `${rows.length} ${J.plural(rows.length, 'бронь', 'брони', 'броней')} · ${hrs(hours)} ч · период ${J.fmtDate(L.from)} — ${J.fmtDate(L.to)}`;
     if (!rows.length) {
@@ -626,8 +659,20 @@
       return;
     }
     const seats = Array.from({ length: data.maxAdmins }, (_, i) => data.admins[i]);
-    const regUrl = `${location.origin}/admin`;
+    const regUrl = new URL('admin.html', location.href).href;
+    const free = data.maxAdmins - data.admins.length;
     $('#view').innerHTML = `
+      <section class="panel">
+        <div class="panel-head"><h2>Код приглашения</h2><span class="muted">нужен для регистрации нового администратора</span></div>
+        <div class="panel-body invite">
+          <span class="invite-code">${esc(data.inviteCode)}</span>
+          <button class="btn btn-ghost btn-sm" type="button" data-copy="${esc(data.inviteCode)}">Скопировать код</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="newInvite">Сменить код</button>
+          <p class="muted" style="flex-basis:100%;font-size:13px">${free > 0
+    ? `Передайте код и ссылку <b>${esc(regUrl)}</b> тому, кого хотите сделать администратором. После регистрации код можно сменить.`
+    : 'Все места заняты — пока не освободите место, код не сработает.'}</p>
+        </div>
+      </section>
       <section class="panel">
         <div class="panel-head"><h2>Доступ к кабинету</h2><span class="muted">${data.admins.length} из ${data.maxAdmins} мест занято</span></div>
         <div class="panel-body">
@@ -641,7 +686,7 @@
             </div>` : `
             <div class="admin-row empty-seat">
               <span class="avatar">+</span>
-              <span><b>Свободное место</b><small>Новый администратор регистрируется сам по адресу <b>${esc(regUrl)}</b> (вкладка «Регистрация»).</small></span>
+              <span><b>Свободное место</b><small>Новый администратор регистрируется сам по адресу <b>${esc(regUrl)}</b> (вкладка «Регистрация», с кодом приглашения).</small></span>
               <button class="btn btn-ghost btn-sm" type="button" data-copy="${esc(regUrl)}">Скопировать ссылку</button>
             </div>`)).join('')}
           </div>
@@ -650,8 +695,26 @@
       </section>`;
 
     $('#view').querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(b.dataset.copy); J.toast('Ссылка скопирована', 'ok'); } catch { J.toast(b.dataset.copy); }
+      try { await navigator.clipboard.writeText(b.dataset.copy); J.toast('Скопировано', 'ok'); } catch { J.toast(b.dataset.copy); }
     }));
+    $('#newInvite').addEventListener('click', async (e) => {
+      const b = e.currentTarget;
+      if (!b.dataset.confirm) {
+        b.dataset.confirm = '1';
+        b.textContent = 'Старый код перестанет работать — сменить?';
+        setTimeout(() => { if (b.isConnected) { delete b.dataset.confirm; b.textContent = 'Сменить код'; } }, 4000);
+        return;
+      }
+      b.disabled = true;
+      try {
+        await api('/api/admin/invite', { method: 'POST' });
+        J.toast('Новый код приглашения создан', 'ok');
+        loadAdmins();
+      } catch (err) {
+        J.toast(err.message, 'err');
+        b.disabled = false;
+      }
+    });
     $('#view').querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
       if (!b.dataset.confirm) {
         b.dataset.confirm = '1';
