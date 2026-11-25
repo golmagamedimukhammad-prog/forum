@@ -93,7 +93,7 @@ $$;
 
 create function jas.tz() returns text
 language sql stable set search_path = '' as $$
-  select coalesce(jas.setting('timezone'), 'Europe/Moscow')
+  select coalesce(jas.setting('timezone'), 'Asia/Almaty')
 $$;
 
 create function jas.now_wall() returns timestamp
@@ -707,7 +707,7 @@ insert into jas.rooms (id, name, capacity, description, sort) values
   ('alfa',  'Alfa',       8, 'Большая переговорная на 8 мест для встреч, презентаций и воркшопов.', 2);
 
 insert into jas.settings (key, value) values
-  ('timezone', 'Europe/Moscow'),
+  ('timezone', 'Asia/Almaty'),
   ('max_duration_min', '480'),
   ('horizon_days', '30'),
   ('invite_code', jas.random_code(4) || '-' || jas.random_code(4));
