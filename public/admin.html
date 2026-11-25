@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>JAS Coworking — кабинет администратора</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#06105f">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+</head>
+<body>
+  <!-- Вход / регистрация -->
+  <div class="auth" id="authScreen" hidden>
+    <div class="auth-art" aria-hidden="true">
+      <img src="/assets/logo.png" alt="" width="132" height="132">
+      <h2>Кабинет администратора</h2>
+      <p>Все брони переговорных Focus Room и Alfa в реальном времени: расписание, контакты гостей, отмены и выгрузка в Excel.</p>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-brand"><img src="/assets/logo.png" alt="JAS" width="40" height="40"><b>JAS Coworking</b></div>
+        <div class="segmented auth-tabs" role="tablist">
+          <button type="button" role="tab" data-tab="login" aria-pressed="true">Вход</button>
+          <button type="button" role="tab" data-tab="register" aria-pressed="false">Регистрация</button>
+        </div>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <h1>С возвращением</h1>
+          <p class="muted">Войдите по email и паролю администратора.</p>
+          <div class="field"><label for="l-email">Email</label><input class="input" id="l-email" name="email" type="email" autocomplete="username" required></div>
+          <div class="field"><label for="l-pass">Пароль</label><input class="input" id="l-pass" name="password" type="password" autocomplete="current-password" required></div>
+          <div class="field-error form-error" data-error="form"></div>
+          <button class="btn btn-blue btn-block auth-submit" type="submit">Войти</button>
+        </form>
+
+        <form id="registerForm" class="auth-form" novalidate hidden>
+          <h1>Регистрация</h1>
+          <div class="seats" id="seats"></div>
+          <div id="regFields">
+            <div class="field"><label for="r-name">Имя</label><input class="input" id="r-name" name="name" autocomplete="name" maxlength="80"></div>
+            <div class="field"><label for="r-email">Email</label><input class="input" id="r-email" name="email" type="email" autocomplete="username" required><div class="field-error" data-error="email"></div></div>
+            <div class="field"><label for="r-pass">Пароль <span class="opt">— минимум 8 символов</span></label><input class="input" id="r-pass" name="password" type="password" autocomplete="new-password" minlength="8" required><div class="field-error" data-error="password"></div></div>
+            <div class="field-error form-error" data-error="form"></div>
+            <button class="btn btn-primary btn-block auth-submit" type="submit">Зарегистрироваться</button>
+          </div>
+        </form>
+        <a class="back-link" href="/">← К странице бронирования</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кабинет -->
+  <div class="app" id="appScreen" hidden>
+    <aside class="sidebar">
+      <a class="sb-brand" href="/admin">
+        <img src="/assets/logo.png" alt="JAS" width="40" height="40">
+        <span><b>JAS Coworking</b><small>Администратор</small></span>
+      </a>
+      <nav class="sb-nav" id="nav">
+        <a href="#overview" data-view="overview"><span data-icon="grid"></span>Обзор</a>
+        <a href="#schedule" data-view="schedule"><span data-icon="calendar"></span>Расписание</a>
+        <a href="#bookings" data-view="bookings"><span data-icon="list"></span>Все брони</a>
+        <a href="#admins" data-view="admins"><span data-icon="people"></span>Администраторы</a>
+        <a href="#settings" data-view="settings"><span data-icon="settings"></span>Настройки</a>
+      </nav>
+      <div class="sb-foot">
+        <a class="sb-link" href="/" target="_blank" rel="noopener">Открыть страницу бронирования ↗</a>
+        <div class="sb-user">
+          <span class="avatar" id="meAvatar"></span>
+          <span class="sb-user-text"><b id="meName"></b><small id="meEmail"></small></span>
+          <button class="btn-icon sb-logout" id="logoutBtn" type="button" title="Выйти" aria-label="Выйти"><span data-icon="logout"></span></button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="main-head">
+        <div>
+          <h1 id="viewTitle">Обзор</h1>
+          <p class="muted" id="viewSub"></p>
+        </div>
+        <div class="head-actions">
+          <span class="sync" id="syncNote" title="Данные обновляются автоматически каждые 30 секунд"></span>
+          <button class="btn btn-primary" id="newBookingBtn" type="button"><span data-icon="plus"></span>Новая бронь</button>
+        </div>
+      </header>
+      <div id="view" class="view"></div>
+    </main>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+  <script src="/assets/common.js"></script>
+  <script src="/assets/admin.js"></script>
+</body>
+</html>

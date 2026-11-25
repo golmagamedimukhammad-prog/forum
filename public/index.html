@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>JAS Coworking — бронирование переговорных</title>
+  <meta name="description" content="Бронирование переговорных Focus Room и Alfa в коворкинге JAS. 24/7, шаг 30 минут.">
+  <meta name="theme-color" content="#0a1a9e">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/booking.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <svg viewBox="0 0 1440 320" preserveAspectRatio="none"><path d="M0 250 C 360 140, 720 360, 1100 210 S 1440 150, 1440 150 L1440 320 L0 320 Z" fill="rgba(255,255,255,.10)"/><path d="M0 290 C 420 210, 820 340, 1180 260 S 1440 230, 1440 230 L1440 320 L0 320 Z" fill="#f4f6fb"/></svg>
+    </div>
+    <nav class="topbar wrap">
+      <a class="brand" href="/">
+        <img src="/assets/logo.png" alt="JAS Acceleration System" width="48" height="48">
+        <span class="brand-text"><b>JAS Coworking</b><small>Acceleration System</small></span>
+      </a>
+      <button class="btn my-btn" id="myBtn" type="button">
+        <span class="my-btn-icon" data-icon="list"></span>
+        <span>Мои брони</span>
+        <span class="badge" id="myCount" hidden>0</span>
+      </button>
+    </nav>
+    <div class="hero-inner wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">24/7 · шаг 30 минут · подтверждение сразу</p>
+        <h1>Бронирование<br>переговорных</h1>
+        <p class="lead">Focus Room для звонков и встреч в узком кругу, Alfa — на 8 человек. Выберите комнату, дату и время.</p>
+      </div>
+      <div class="hero-status" id="heroStatus" aria-live="polite"></div>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <div class="col-main">
+      <section class="step" aria-labelledby="h-room">
+        <div class="step-head"><span class="step-num">1</span><h2 id="h-room">Комната</h2></div>
+        <div class="rooms" id="rooms" role="radiogroup" aria-labelledby="h-room"></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-date">
+        <div class="step-head">
+          <span class="step-num">2</span><h2 id="h-date">Дата</h2>
+          <label class="date-pick">
+            <span data-icon="calendar"></span>
+            <span>Другая дата</span>
+            <input type="date" id="datePicker" aria-label="Выбрать другую дату">
+          </label>
+        </div>
+        <div class="dates" id="dates" role="listbox" aria-labelledby="h-date"></div>
+      </section>
+
+      <section class="step" aria-labelledby="h-time">
+        <div class="step-head">
+          <span class="step-num">3</span><h2 id="h-time">Время</h2>
+          <span class="hint">Нажмите на начало, затем на последний нужный слот</span>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="lg lg-free"></i>Свободно</span>
+          <span><i class="lg lg-sel"></i>Ваш выбор</span>
+          <span><i class="lg lg-busy"></i>Занято</span>
+          <span><i class="lg lg-past"></i>Прошло</span>
+        </div>
+        <div id="slots" class="slot-groups"></div>
+      </section>
+    </div>
+
+    <aside class="col-side">
+      <form class="card booking-card" id="bookingForm" novalidate>
+        <div class="bc-head">
+          <h2>Ваша бронь</h2>
+          <span class="tz" id="tzNote"></span>
+        </div>
+        <div id="summary" class="summary"></div>
+        <div class="field-error form-time-error" data-error="time"></div>
+
+        <div class="form-fields">
+          <div class="field">
+            <label for="f-name">Имя и фамилия</label>
+            <input class="input" id="f-name" name="name" autocomplete="name" maxlength="80" required>
+            <div class="field-error" data-error="name"></div>
+          </div>
+          <div class="field">
+            <label for="f-phone">Телефон</label>
+            <input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00" maxlength="32" required>
+            <div class="field-error" data-error="phone"></div>
+          </div>
+          <div class="field">
+            <label for="f-email">Email <span class="opt">— необязательно</span></label>
+            <input class="input" id="f-email" name="email" type="email" autocomplete="email" maxlength="120">
+            <div class="field-error" data-error="email"></div>
+          </div>
+          <div class="field">
+            <span class="field-label" id="l-type">Вы</span>
+            <div class="segmented" id="memberType" role="group" aria-labelledby="l-type">
+              <button type="button" data-value="resident" aria-pressed="true">Резидент</button>
+              <button type="button" data-value="guest" aria-pressed="false">Гость</button>
+            </div>
+            <div class="field-error" data-error="member_type"></div>
+          </div>
+          <div class="field">
+            <label for="f-company">Компания или проект <span class="opt">— необязательно</span></label>
+            <input class="input" id="f-company" name="company" autocomplete="organization" maxlength="100">
+          </div>
+          <div class="field field-row">
+            <span class="field-label" id="l-people">Сколько человек</span>
+            <div class="stepper" role="group" aria-labelledby="l-people">
+              <button type="button" id="peopleMinus" aria-label="Меньше">−</button>
+              <output id="people" class="tnum">1</output>
+              <button type="button" id="peoplePlus" aria-label="Больше">+</button>
+            </div>
+          </div>
+          <div class="field-error" data-error="people"></div>
+          <div class="field">
+            <label for="f-purpose">Цель встречи <span class="opt">— необязательно</span></label>
+            <textarea class="textarea" id="f-purpose" name="purpose" maxlength="300" rows="2" placeholder="Например: созвон с инвестором"></textarea>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-submit" type="submit" id="submitBtn" disabled>Выберите время</button>
+        <p class="fine">Отменить бронь можно в разделе «Мои брони» или по коду брони и телефону.</p>
+      </form>
+    </aside>
+  </main>
+
+  <div class="mobile-bar" id="mobileBar" hidden>
+    <div class="mb-info"><b id="mbTime"></b><span id="mbMeta"></span></div>
+    <button class="btn btn-primary" type="button" id="mbGo">Оформить</button>
+  </div>
+
+  <footer class="foot wrap">
+    <img src="/assets/logo.png" alt="" width="28" height="28">
+    <span>JAS Coworking · Acceleration System</span>
+  </footer>
+
+  <div id="toasts" class="toasts"></div>
+  <script src="/assets/common.js"></script>
+  <script src="/assets/booking.js"></script>
+</body>
+</html>
